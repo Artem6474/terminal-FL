@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>RP Terminal — Экстренные службы</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{background:#111;color:#0f0;font-family:monospace;padding:10px;}
+    h1,h2{color:#0f0;}
+    label{display:block;margin:8px 0 2px;}
+    input,textarea,select,button{background:#000;color:#0f0;border:1px solid #0f0;padding:6px;width:100%;}
+    .nav{margin:10px 0;}
+    .nav button{width:32%;margin-right:2%;display:inline-block;}
+    .form{display:none;}
+    .form.active{display:block;}
+  </style>
+  <script>
+    function show(id){
+      document.querySelectorAll('.form').forEach(f=>f.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function save(role){
+      alert('✅ '+role+' протокол сохранён в LocalStorage');
+      localStorage.setItem('rp_'+role,new Date().toLocaleString());
+    }
+    window.onload=()=>show('police');
+  </script>
+</head>
+<body>
+  <h1>RP TERMINAL — Экстренные службы</h1>
+  <div class="nav">
+    <button onclick="show('police')">🚓 Полиция</button>
+    <button onclick="show('medic')">🚑 Медики</button>
+    <button onclick="show('fire')">🚒 Пожарные</button>
+  </div>
+
+  <div id="police" class="form">
+    <h2>ПРОТОКОЛ ПОЛИЦИИ</h2>
+    <label>Дата/Время: <input type="text"></label>
+    <label>Позывной: <input type="text"></label>
+    <label>Место: <input type="text"></label>
+    <label>Причина: <select><option>Превышение скорости</option><option>Нарушение ПДД</option><option>Подозрение</option><option>Другое</option></select></label>
+    <label>ФИО: <input></label>
+    <label>ВУ №: <input></label>
+    <label>ТС (марка/номер): <input></label>
+    <label>Штраф $: <input></label>
+    <label>Подпись водителя: <input></label>
+    <label>Подпись офицера: <input></label>
+    <button onclick="save('police')">Сохранить протокол</button>
+  </div>
+
+  <div id="medic" class="form">
+    <h2>КАРТА ВЫЗОВА МЕДИКОВ</h2>
+    <label>Дата/Время вызова: <input></label>
+    <label>Позывной: <input></label>
+    <label>Место: <input></label>
+    <label>ФИО пациента: <input></label>
+    <label>Возраст: <input></label>
+    <label>Жалобы: <textarea rows="2"></textarea></label>
+    <label>Помощь оказана: <textarea rows="2"></textarea></label>
+    <label>Госпитализация: <select><option>Нет</option><option>Да</option></select></label>
+    <label>Подпись медика: <input></label>
+    <button onclick="save('medic')">Сохранить карту</button>
+  </div>
+
+  <div id="fire" class="form">
+    <h2>ОТЧЁТ ПОЖАРНЫХ</h2>
+    <label>Дата/Время вызова: <input></label>
+    <label>Позывной: <input></label>
+    <label>Место: <input></label>
+    <label>Тип: <select><option>Пожар</option><option>ДТП</option><option>Спасение</option><option>Другое</option></select></label>
+    <label>Описание: <textarea rows="3"></textarea></label>
+    <label>Меры приняты: <textarea rows="2"></textarea></label>
+    <label>Результат: <textarea rows="2"></textarea></label>
+    <label>Подпись: <input></label>
+    <button onclick="save('fire')">Сохранить отчёт</button>
+  </div>
+</body>
+      </html>
