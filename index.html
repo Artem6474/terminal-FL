@@ -1,79 +1,949 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>RP Terminal — Экстренные службы</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body{background:#111;color:#0f0;font-family:monospace;padding:10px;}
-    h1,h2{color:#0f0;}
-    label{display:block;margin:8px 0 2px;}
-    input,textarea,select,button{background:#000;color:#0f0;border:1px solid #0f0;padding:6px;width:100%;}
-    .nav{margin:10px 0;}
-    .nav button{width:32%;margin-right:2%;display:inline-block;}
-    .form{display:none;}
-    .form.active{display:block;}
-  </style>
-  <script>
-    function show(id){
-      document.querySelectorAll('.form').forEach(f=>f.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-    function save(role){
-      alert('✅ '+role+' протокол сохранён в LocalStorage');
-      localStorage.setItem('rp_'+role,new Date().toLocaleString());
-    }
-    window.onload=()=>show('police');
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDT Терминал | Flashing Lights RP</title>
+    <style>
+        :root {
+            --main-color: #E67E22;
+            --dark-color: #D35400;
+            --darker-color: #A04000;
+            --light-color: #F5B041;
+            --lighter-color: #F8C471;
+            --text-color: #FFFFFF;
+            --bg-color: #1A1A1A;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--dark-color);
+            padding: 15px 20px;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: var(--darker-color);
+            border-radius: 0 0 5px 5px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            background-color: var(--darker-color);
+            transition: background-color 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .tab:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .tab.active {
+            background-color: var(--main-color);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: #2C2C2C;
+            border-radius: 0 0 5px 5px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--light-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--dark-color);
+            border-radius: 4px;
+            background-color: #333;
+            color: var(--text-color);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        button {
+            background-color: var(--main-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--light-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--main-color);
+        }
+        
+        .btn-danger {
+            background-color: #E74C3C;
+        }
+        
+        .btn-success {
+            background-color: #27AE60;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid var(--main-color);
+            padding-bottom: 10px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            color: var(--light-color);
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--main-color);
+        }
+        
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--light-color);
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--darker-color);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .status-value {
+            font-weight: bold;
+            color: var(--light-color);
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>RP TERMINAL — Экстренные службы</h1>
-  <div class="nav">
-    <button onclick="show('police')">🚓 Полиция</button>
-    <button onclick="show('medic')">🚑 Медики</button>
-    <button onclick="show('fire')">🚒 Пожарные</button>
-  </div>
-
-  <div id="police" class="form">
-    <h2>ПРОТОКОЛ ПОЛИЦИИ</h2>
-    <label>Дата/Время: <input type="text"></label>
-    <label>Позывной: <input type="text"></label>
-    <label>Место: <input type="text"></label>
-    <label>Причина: <select><option>Превышение скорости</option><option>Нарушение ПДД</option><option>Подозрение</option><option>Другое</option></select></label>
-    <label>ФИО: <input></label>
-    <label>ВУ №: <input></label>
-    <label>ТС (марка/номер): <input></label>
-    <label>Штраф $: <input></label>
-    <label>Подпись водителя: <input></label>
-    <label>Подпись офицера: <input></label>
-    <button onclick="save('police')">Сохранить протокол</button>
-  </div>
-
-  <div id="medic" class="form">
-    <h2>КАРТА ВЫЗОВА МЕДИКОВ</h2>
-    <label>Дата/Время вызова: <input></label>
-    <label>Позывной: <input></label>
-    <label>Место: <input></label>
-    <label>ФИО пациента: <input></label>
-    <label>Возраст: <input></label>
-    <label>Жалобы: <textarea rows="2"></textarea></label>
-    <label>Помощь оказана: <textarea rows="2"></textarea></label>
-    <label>Госпитализация: <select><option>Нет</option><option>Да</option></select></label>
-    <label>Подпись медика: <input></label>
-    <button onclick="save('medic')">Сохранить карту</button>
-  </div>
-
-  <div id="fire" class="form">
-    <h2>ОТЧЁТ ПОЖАРНЫХ</h2>
-    <label>Дата/Время вызова: <input></label>
-    <label>Позывной: <input></label>
-    <label>Место: <input></label>
-    <label>Тип: <select><option>Пожар</option><option>ДТП</option><option>Спасение</option><option>Другое</option></select></label>
-    <label>Описание: <textarea rows="3"></textarea></label>
-    <label>Меры приняты: <textarea rows="2"></textarea></label>
-    <label>Результат: <textarea rows="2"></textarea></label>
-    <label>Подпись: <input></label>
-    <button onclick="save('fire')">Сохранить отчёт</button>
-  </div>
+    <div class="container">
+        <header>
+            <div class="logo">MDT Терминал | Flashing Lights RP</div>
+            <div class="user-info">
+                <div>Сотрудник: <span id="officer-name">Иванов И.И.</span></div>
+                <div>Статус: <span id="officer-status">На службе</span></div>
+            </div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab(event, 'dashboard')">Главная</div>
+            <div class="tab" onclick="openTab(event, 'police')">Полиция</div>
+            <div class="tab" onclick="openTab(event, 'ems')">Скорая помощь</div>
+            <div class="tab" onclick="openTab(event, 'fire')">Пожарные</div>
+            <div class="tab" onclick="openTab(event, 'database')">База данных</div>
+        </div>
+        
+        <!-- Главная панель -->
+        <div id="dashboard" class="tab-content active">
+            <h2 class="section-title">Статус системы</h2>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <div>Всего вызовов</div>
+                    <div class="status-value">24</div>
+                </div>
+                <div class="status-item">
+                    <div>Активные вызовы</div>
+                    <div class="status-value">5</div>
+                </div>
+                <div class="status-item">
+                    <div>Нарушители</div>
+                    <div class="status-value">12</div>
+                </div>
+                <div class="status-item">
+                    <div>Пострадавшие</div>
+                    <div class="status-value">8</div>
+                </div>
+            </div>
+            
+            <h2 class="section-title">Последние события</h2>
+            
+            <div class="grid-container">
+                <div class="card">
+                    <div class="card-title">ДТП на пр. Ленина</div>
+                    <div>Тип: ДТП с пострадавшими</div>
+                    <div>Время: 14:30</div>
+                    <div>Статус: В работе</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Ограбление банка</div>
+                    <div>Тип: Криминальный инцидент</div>
+                    <div>Время: 13:45</div>
+                    <div>Статус: В работе</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Пожар на ул. Гагарина</div>
+                    <div>Тип: Пожар в жилом доме</div>
+                    <div>Время: 12:20</div>
+                    <div>Статус: Ликвидирован</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Нарушение ПДД</div>
+                    <div>Тип: Превышение скорости</div>
+                    <div>Время: 11:05</div>
+                    <div>Статус: Завершен</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Полиция -->
+        <div id="police" class="tab-content">
+            <h2 class="section-title">Протокол остановки транспортного средства</h2>
+            
+            <form id="police-form">
+                <div class="form-group">
+                    <label for="police-date">Дата:</label>
+                    <input type="date" id="police-date" name="police-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="police-time">Время:</label>
+                    <input type="time" id="police-time" name="police-time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="police-location">Место остановки (улица / район / GPS):</label>
+                    <input type="text" id="police-location" name="police-location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="police-unit">Позывной / Юнит:</label>
+                    <input type="text" id="police-unit" name="police-unit" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Причина остановки:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="reason-speed" name="reason" value="speed">
+                            <label for="reason-speed">Превышение скорости</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="reason-aggressive" name="reason" value="aggressive">
+                            <label for="reason-aggressive">Агрессивное вождение</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="reason-prophet" name="reason" value="prophet">
+                            <label for="reason-prophet">Пророчество</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="reason-other" name="reason" value="other">
+                            <label for="reason-other">Другое</label>
+                            <input type="text" id="reason-other-text" name="reason-other-text" style="width: 150px; margin-left: 5px;" placeholder="Укажите причину">
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="section-title">Данные водителя</h3>
+                
+                <div class="form-group">
+                    <label for="driver-name">ФИО:</label>
+                    <input type="text" id="driver-name" name="driver-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="driver-birthdate">Дата рождения:</label>
+                    <input type="date" id="driver-birthdate" name="driver-birthdate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="driver-license">№ водительского удостоверения:</label>
+                    <input type="text" id="driver-license" name="driver-license" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Статус прав:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="license-valid" name="license-status" value="valid" checked>
+                            <label for="license-valid">Действительные</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="license-suspended" name="license-status" value="suspended">
+                            <label for="license-suspended">Приостановлены</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="license-expired" name="license-status" value="expired">
+                            <label for="license-expired">Истёк срок</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="license-none" name="license-status" value="none">
+                            <label for="license-none">Отсутствуют</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="driver-address">Адрес проживания:</label>
+                    <input type="text" id="driver-address" name="driver-address" required>
+                </div>
+                
+                <h3 class="section-title">Данные транспортного средства</h3>
+                
+                <div class="form-group">
+                    <label for="vehicle-model">Марка / Модель:</label>
+                    <input type="text" id="vehicle-model" name="vehicle-model" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vehicle-color">Цвет:</label>
+                    <input type="text" id="vehicle-color" name="vehicle-color" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vehicle-plate">Гос. номер:</label>
+                    <input type="text" id="vehicle-plate" name="vehicle-plate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Регистрация:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="registration-valid" name="registration" value="valid" checked>
+                            <label for="registration-valid">Действительная</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="registration-expired" name="registration" value="expired">
+                            <label for="registration-expired">Просрочена</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="registration-none" name="registration" value="none">
+                            <label for="registration-none">Отсутствует</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Страховка:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="insurance-valid" name="insurance" value="valid" checked>
+                            <label for="insurance-valid">Действительная</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="insurance-expired" name="insurance" value="expired">
+                            <label for="insurance-expired">Просрочена</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="insurance-none" name="insurance" value="none">
+                            <label for="insurance-none">Отсутствует</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="section-title">Нарушение</h3>
+                
+                <div class="form-group">
+                    <label for="violation-code">Нарушенные статьи / код:</label>
+                    <input type="text" id="violation-code" name="violation-code" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="violation-description">Краткое описание нарушения:</label>
+                    <textarea id="violation-description" name="violation-description" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="officer-notes">Заметки офицера:</label>
+                    <textarea id="officer-notes" name="officer-notes"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Фото/видеофиксация:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="media-yes" name="media" value="yes">
+                            <label for="media-yes">Есть</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="media-no" name="media" value="no" checked>
+                            <label for="media-no">Нет</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="section-title">Принятые меры</h3>
+                
+                <div class="form-group">
+                    <label>Штраф:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="fine-yes" name="fine" value="yes">
+                            <label for="fine-yes">Да</label>
+                            <input type="number" id="fine-amount" name="fine-amount" placeholder="Сумма $" style="width: 100px; margin-left: 5px;" disabled>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="fine-no" name="fine" value="no" checked>
+                            <label for="fine-no">Нет</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Предупреждение:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="warning-oral" name="warning" value="oral">
+                            <label for="warning-oral">Устное</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="warning-written" name="warning" value="written">
+                            <label for="warning-written">Письменное</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="warning-none" name="warning" value="none" checked>
+                            <label for="warning-none">Нет</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Арест:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="arrest-yes" name="arrest" value="yes">
+                            <label for="arrest-yes">Да</label>
+                              <input type="text" id="arrest-charge" name="arrest-charge" placeholder="Статья/обвинение" style="width: 200px; margin-left: 5px;" disabled>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="arrest-no" name="arrest" value="no" checked>
+                            <label for="arrest-no">Нет</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Эвакуация ТС:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="radio" id="tow-yes" name="tow" value="yes">
+                            <label for="tow-yes">Да</label>
+                            <input type="text" id="tow-service" name="tow-service" placeholder="Служба" style="width: 150px; margin-left: 5px;" disabled>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="radio" id="tow-no" name="tow" value="no" checked>
+                            <label for="tow-no">Нет</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="driver-signature">Подпись водителя:</label>
+                    <input type="text" id="driver-signature" name="driver-signature">
+                    <div class="checkbox-item" style="margin-top: 5px;">
+                        <input type="checkbox" id="driver-refused" name="driver-refused">
+                        <label for="driver-refused">Отказался?</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="officer-signature">Подпись офицера:</label>
+                    <input type="text" id="officer-signature" name="officer-signature" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="additional-notes">Дополнительные заметки:</label>
+                    <textarea id="additional-notes" name="additional-notes" placeholder="наркотики, оружие, угрозы, розыск, понятые и пр."></textarea>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">Сохранить протокол</button>
+                    <button type="reset" class="btn-danger">Очистить форму</button>
+                    <button type="button" class="btn-success" onclick="printProtocol()">Печать протокола</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Скорая помощь -->
+        <div id="ems" class="tab-content">
+            <h2 class="section-title">Протокол медицинского инцидента</h2>
+            
+            <form id="ems-form">
+                <div class="form-group">
+                    <label for="ems-date">Дата:</label>
+                    <input type="date" id="ems-date" name="ems-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-time">Время:</label>
+                    <input type="time" id="ems-time" name="ems-time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-location">Место инцидента:</label>
+                    <input type="text" id="ems-location" name="ems-location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-unit">Позывной / Бригада:</label>
+                    <input type="text" id="ems-unit" name="ems-unit" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-incident-type">Тип инцидента:</label>
+                    <select id="ems-incident-type" name="ems-incident-type" required>
+                        <option value="">Выберите тип</option>
+                        <option value="traffic-accident">ДТП</option>
+                        <option value="shooting">Перестрелка</option>
+                        <option value="assault">Нападение</option>
+                        <option value="heart-attack">Сердечный приступ</option>
+                        <option value="overdose">Передозировка</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                
+                <h3 class="section-title">Данные пострадавшего</h3>
+                
+                <div class="form-group">
+                    <label for="patient-name">ФИО:</label>
+                    <input type="text" id="patient-name" name="patient-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="patient-birthdate">Дата рождения:</label>
+                    <input type="date" id="patient-birthdate" name="patient-birthdate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="patient-gender">Пол:</label>
+                    <select id="patient-gender" name="patient-gender" required>
+                        <option value="male">Мужской</option>
+                        <option value="female">Женский</option>
+                        <option value="other">Другой</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="patient-address">Адрес проживания:</label>
+                    <input type="text" id="patient-address" name="patient-address">
+                </div>
+                
+                <div class="form-group">
+                    <label for="patient-insurance">Страховой полис (если есть):</label>
+                    <input type="text" id="patient-insurance" name="patient-insurance">
+                </div>
+                
+                <h3 class="section-title">Медицинские данные</h3>
+                
+                <div class="form-group">
+                    <label for="patient-condition">Состояние пострадавшего:</label>
+                    <select id="patient-condition" name="patient-condition" required>
+                        <option value="stable">Стабильное</option>
+                        <option value="serious">Тяжелое</option>
+                        <option value="critical">Критическое</option>
+                        <option value="deceased">Умерший</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="patient-injuries">Травмы/заболевания:</label>
+                    <textarea id="patient-injuries" name="patient-injuries" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="treatment-provided">Оказанная помощь:</label>
+                    <textarea id="treatment-provided" name="treatment-provided" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="medication-administered">Введенные препараты:</label>
+                    <textarea id="medication-administered" name="medication-administered"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="hospital-destination">Направлен в больницу:</label>
+                    <input type="text" id="hospital-destination" name="hospital-destination">
+                </div>
+                
+                <h3 class="section-title">Дополнительная информация</h3>
+                
+                <div class="form-group">
+                    <label for="ems-witnesses">Свидетели (ФИО, контакты):</label>
+                    <textarea id="ems-witnesses" name="ems-witnesses"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-police-involved">Участие полиции:</label>
+                    <select id="ems-police-involved" name="ems-police-involved">
+                        <option value="no">Нет</option>
+                        <option value="yes">Да</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-police-details">Данные полиции (если участвовали):</label>
+                    <textarea id="ems-police-details" name="ems-police-details"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ems-notes">Заметки бригады:</label>
+                    <textarea id="ems-notes" name="ems-notes"></textarea>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">Сохранить протокол</button>
+                    <button type="reset" class="btn-danger">Очистить форму</button>
+                    <button type="button" class="btn-success" onclick="printProtocol()">Печать протокола</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Пожарные -->
+        <div id="fire" class="tab-content">
+            <h2 class="section-title">Протокол пожарного инцидента</h2>
+            
+            <form id="fire-form">
+                <div class="form-group">
+                    <label for="fire-date">Дата:</label>
+                    <input type="date" id="fire-date" name="fire-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-time">Время:</label>
+                    <input type="time" id="fire-time" name="fire-time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-location">Место инцидента:</label>
+                    <input type="text" id="fire-location" name="fire-location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-unit">Позывной / Расчет:</label>
+                    <input type="text" id="fire-unit" name="fire-unit" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-type">Тип инцидента:</label>
+                    <select id="fire-type" name="fire-type" required>
+                        <option value="">Выберите тип</option>
+                        <option value="building-fire">Пожар в здании</option>
+                        <option value="vehicle-fire">Пожар ТС</option>
+                        <option value="wildfire">Лесной пожар</option>
+                        <option value="gas-leak">Утечка газа</option>
+                        <option value="hazmat">Опасные вещества</option>
+                        <option value="rescue">Спасательная операция</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                
+                <h3 class="section-title">Детали инцидента</h3>
+                
+                <div class="form-group">
+                    <label for="fire-cause">Причина (если известна):</label>
+                    <input type="text" id="fire-cause" name="fire-cause">
+                        </div>
+                
+                <div class="form-group">
+                    <label for="fire-spread">Распространение пожара:</label>
+                    <textarea id="fire-spread" name="fire-spread"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-damage">Нанесенный ущерб:</label>
+                    <textarea id="fire-damage" name="fire-damage"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-injuries">Пострадавшие:</label>
+                    <select id="fire-injuries" name="fire-injuries" required>
+                        <option value="none">Нет</option>
+                        <option value="minor">Легкие травмы</option>
+                        <option value="serious">Тяжелые травмы</option>
+                        <option value="fatalities">Есть погибшие</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-injuries-details">Детали о пострадавших (если есть):</label>
+                    <textarea id="fire-injuries-details" name="fire-injuries-details"></textarea>
+                </div>
+                
+                <h3 class="section-title">Действия пожарных</h3>
+                
+                <div class="form-group">
+                    <label for="fire-response-time">Время прибытия:</label>
+                    <input type="time" id="fire-response-time" name="fire-response-time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-contained-time">Время локализации:</label>
+                    <input type="time" id="fire-contained-time" name="fire-contained-time">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-extinguished-time">Время ликвидации:</label>
+                    <input type="time" id="fire-extinguished-time" name="fire-extinguished-time">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-equipment">Использованное оборудование:</label>
+                    <textarea id="fire-equipment" name="fire-equipment"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-personnel">Задействованный персонал:</label>
+                    <textarea id="fire-personnel" name="fire-personnel"></textarea>
+                </div>
+                
+                <h3 class="section-title">Дополнительная информация</h3>
+                
+                <div class="form-group">
+                    <label for="fire-witnesses">Свидетели (ФИО, контакты):</label>
+                    <textarea id="fire-witnesses" name="fire-witnesses"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-police-involved">Участие полиции:</label>
+                    <select id="fire-police-involved" name="fire-police-involved">
+                        <option value="no">Нет</option>
+                        <option value="yes">Да</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-ems-involved">Участие скорой помощи:</label>
+                    <select id="fire-ems-involved" name="fire-ems-involved">
+                        <option value="no">Нет</option>
+                        <option value="yes">Да</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fire-notes">Заметки расчета:</label>
+                    <textarea id="fire-notes" name="fire-notes"></textarea>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">Сохранить протокол</button>
+                    <button type="reset" class="btn-danger">Очистить форму</button>
+                    <button type="button" class="btn-success" onclick="printProtocol()">Печать протокола</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- База данных -->
+        <div id="database" class="tab-content">
+            <h2 class="section-title">Поиск в базе данных</h2>
+            
+            <div class="form-group">
+                <label for="search-type">Тип поиска:</label>
+                <select id="search-type" name="search-type">
+                    <option value="person">Физическое лицо</option>
+                    <option value="vehicle">Транспортное средство</option>
+                    <option value="incident">Инцидент</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="search-query">Поисковый запрос:</label>
+                <input type="text" id="search-query" name="search-query" placeholder="Введите ФИО, номер или дату">
+            </div>
+            
+            <button type="button" class="btn-primary" onclick="searchDatabase()">Поиск</button>
+            
+            <div id="search-results" style="margin-top: 20px;">
+                <!-- Результаты поиска будут здесь -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].className = tabcontent[i].className.replace(" active", "");
+            }
+            
+            tablinks = document.getElementsByClassName("tab");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).className += " active";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Включение/выключение полей в зависимости от выбора
+        document.getElementById('fine-yes').addEventListener('change', function() {
+            document.getElementById('fine-amount').disabled = !this.checked;
+        });
+        
+        document.getElementById('arrest-yes').addEventListener('change', function() {
+            document.getElementById('arrest-charge').disabled = !this.checked;
+        });
+        
+        document.getElementById('tow-yes').addEventListener('change', function() {
+            document.getElementById('tow-service').disabled = !this.checked;
+        });
+        
+        document.getElementById('reason-other').addEventListener('change', function() {
+            document.getElementById('reason-other-text').disabled = !this.checked;
+        });
+        
+        function printProtocol() {
+            alert("Функция печати будет реализована в будущем");
+            // В будущем можно реализовать фактическую печать или сохранение PDF
+        }
+        
+        function searchDatabase() {
+            var searchType = document.getElementById('search-type').value;
+            var query = document.getElementById('search-query').value;
+            var resultsDiv = document.getElementById('search-results');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="card">Пожалуйста, введите поисковый запрос</div>';
+                return;
+            }
+            
+            // Здесь будет реальный поиск, пока просто демо
+            resultsDiv.innerHTML = `
+                <div class="card">
+                    <div class="card-title">Результаты поиска (${searchType}): "${query}"</div>
+                    <div>Найдено 3 записи</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Иванов Иван Иванович</div>
+                    <div>Дата рождения: 15.05.1985</div>
+                    <div>Водительское удостоверение: АВ123456</div>
+                    <div>Последний инцидент: 12.06.2023 (ДТП)</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Петров Петр Петрович</div>
+                    <div>Дата рождения: 22.11.1990</div>
+                    <div>Водительское удостоверение: ВС654321</div>
+                    <div>Последний инцидент: 05.06.2023 (Превышение скорости)</div>
+                </div>
+            `;
+        }
+        
+        // Обработка отправки форм
+        document.getElementById('police-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Протокол полиции сохранен');
+            // Здесь будет реальная обработка данных
+        });
+        
+        document.getElementById('ems-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Протокол скорой помощи сохранен');
+        });
+        
+        document.getElementById('fire-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Протокол пожарных сохранен');
+        });
+    </script>
 </body>
-</html>
+  </html>
