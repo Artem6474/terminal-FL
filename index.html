@@ -944,6 +944,51 @@
             e.preventDefault();
             alert('Протокол пожарных сохранен');
         });
+        // ===== КОД ИСТОРИИ ПРОТОКОЛОВ =====
+let savedProtocols = JSON.parse(localStorage.getItem('savedProtocols')) || [];
+
+// Функция отображения протоколов
+function displayProtocols() {
+    const list = document.getElementById('protocols-list');
+    list.innerHTML = '';
+    
+    savedProtocols.forEach(protocol => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="card-title">${protocol.type === 'police' ? '🚓' : protocol.type === 'ems' ? '🚑' : '🚒'} 
+            Протокол #${protocol.id}</div>
+            <div>Дата: ${protocol.date} ${protocol.time}</div>
+            <div>Тип: ${protocol.type}</div>
+            <div>Место: ${protocol.location}</div>
+            <button onclick="viewProtocol('${protocol.id}')">Просмотреть</button>
+        `;
+        list.appendChild(card);
+    });
+}
+
+// Функция просмотра протокола
+function viewProtocol(id) {
+    const protocol = savedProtocols.find(p => p.id === id);
+    if (protocol) {
+        alert(`Просмотр протокола ${id}\nДата: ${protocol.date}\nТип: ${protocol.type}`);
+        // Здесь можно реализовать модальное окно с подробностями
+    }
+}
+
+// Добавляем вкладку в меню при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelector('.tabs');
+    const historyTab = document.createElement('div');
+    historyTab.className = 'tab';
+    historyTab.textContent = 'История';
+    historyTab.onclick = function() {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('history').classList.add('active');
+        displayProtocols();
+    };
+    tabs.appendChild(historyTab);
+});
     </script>
 </body>
   </html>
