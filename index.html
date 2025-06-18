@@ -854,8 +854,146 @@
             <div id="search-results" style="margin-top: 20px;">
                 <!-- Результаты поиска будут здесь -->
             </div>
+        </form>
+    </div>
+        
+        <!-- История протоколов -->
+    <div id="history" class="tab-content">
+        <h2 class="section-title">История протоколов</h2>
+        <div id="protocols-list" class="grid-container">
+            <!-- Протоколы будут здесь -->
         </div>
     </div>
+</div> <!-- Закрываем основной контейнер -->
+
+    // ===== ИСТОРИЯ ПРОТОКОЛОВ =====
+let savedProtocols = JSON.parse(localStorage.getItem('savedProtocols')) || [];
+
+// Функция отображения протоколов
+function displayProtocols() {
+    const list = document.getElementById('protocols-list');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    
+    if (savedProtocols.length === 0) {
+        list.innerHTML = '<div class="card">Нет сохранённых протоколов</div>';
+        return;
+    }
+    
+    savedProtocols.forEach((protocol, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="card-title">
+                ${protocol.type === 'police' ? '🚓' : protocol.type === 'ems' ? '🚑' : '🚒'} 
+                Протокол #${index + 1}
+            </div>
+            <div>Дата: ${protocol.date}</div>
+            <div>Тип: ${protocol.type}</div>
+            <button class="btn-primary" onclick="viewProtocol(${index})">Просмотреть</button>
+        `;
+        list.appendChild(card);
+    });
+}
+
+// Просмотр протокола
+function viewProtocol(index) {
+    const protocol = savedProtocols[index];
+    if (!protocol) return;
+    
+    let details = `Протокол #${index + 1}\nТип: ${protocol.type}\nДата: ${protocol.date}\n\n`;
+    
+    if (protocol.type === 'police') {
+        details += `Водитель: ${protocol.driverName || 'Нет данных'}\n`;
+        details += `Причина: ${protocol.reason || 'Нет данных'}\n`;
+    } else if (protocol.type === 'ems') {
+        details += `Пациент: ${protocol.patientName || 'Нет данных'}\n`;
+        details += `Диагноз: ${protocol.patientInjuries || 'Нет данных'}\n`;
+    } else if (protocol.type === 'fire') {
+        details += `Тип инцидента: ${protocol.fireType || 'Нет данных'}\n`;
+    }
+    
+    alert(details);
+}
+
+// Добавляем вкладку истории
+function initHistoryTab() {
+    const tabs = document.querySelector('.tabs');
+    if (!tabs) return;
+    
+    const historyTab = document.createElement('div');
+    historyTab.className = 'tab';
+    historyTab.textContent = 'История';
+    historyTab.onclick = function() {
+        openTab(event, 'history');
+        displayProtocols();
+    };
+    tabs.appendChild(historyTab);
+}
+
+// Обновляем обработчики форм
+function updateFormHandlers() {
+    // Полиция
+    const policeForm = document.getElementById('police-form');
+    if (policeForm) {
+        policeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const protocol = {
+                type: 'police',
+                date: this.elements['police-date'].value,
+                driverName: this.elements['driver-name'].value,
+                reason: Array.from(document.querySelectorAll('input[name="reason"]:checked'))
+                    .map(el => el.nextElementSibling.textContent).join(', ')
+            };
+            savedProtocols.push(protocol);
+            localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+            alert('Протокол полиции сохранён');
+            this.reset();
+        });
+    }
+    
+    // Скорая помощь
+    const emsForm = document.getElementById('ems-form');
+    if (emsForm) {
+        emsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const protocol = {
+                type: 'ems',
+                date: this.elements['ems-date'].value,
+                patientName: this.elements['patient-name'].value,
+                patientInjuries: this.elements['patient-injuries'].value
+            };
+            savedProtocols.push(protocol);
+            localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+            alert('Протокол скорой помощи сохранён');
+            this.reset();
+        });
+    }
+    
+    // Пожарные
+    const fireForm = document.getElementById('fire-form');
+    if (fireForm) {
+        fireForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const protocol = {
+                type: 'fire',
+                date: this.elements['fire-date'].value,
+                fireType: this.elements['fire-type'].value
+            };
+            savedProtocols.push(protocol);
+            localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+            alert('Протокол пожарных сохранён');
+            this.reset();
+        });
+    }
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    initHistoryTab();
+    updateFormHandlers();
+});
     
     <script>
         function openTab(evt, tabName) {
