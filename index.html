@@ -856,6 +856,381 @@
             </div>
         </div>
     </div>
+      <!-- История протоколов -->
+        <div id="history" class="tab-content">
+            <h2 class="section-title">История протоколов</h2>
+            
+            <div class="form-group">
+                <label for="history-filter">Фильтр:</label>
+                <select id="history-filter" name="history-filter">
+                    <option value="all">Все протоколы</option>
+                    <option value="police">Полиция</option>
+                    <option value="ems">Скорая помощь</option>
+                    <option value="fire">Пожарные</option>
+                    <option value="date">По дате</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="date-filter-container" style="display: none;">
+                <label for="history-date">Выберите дату:</label>
+                <input type="date" id="history-date" name="history-date">
+            </div>
+            
+            <button type="button" class="btn-primary" onclick="filterProtocols()">Применить фильтр</button>
+            <button type="button" class="btn-danger" onclick="clearProtocols()" style="margin-left: 10px;">Очистить историю</button>
+            
+            <div id="protocols-list" class="grid-container" style="margin-top: 20px;">
+                <!-- Здесь будут отображаться сохраненные протоколы -->
+            </div>
+            
+            <!-- Модальное окно для просмотра протокола -->
+            <div id="protocol-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; overflow-y: auto;">
+                <div style="background-color: #333; max-width: 800px; margin: 20px auto; padding: 20px; border-radius: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 id="modal-title" style="color: var(--light-color);">Просмотр протокола</h2>
+                        <button type="button" onclick="closeModal()" style="background: none; border: none; color: var(--text-color); font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div id="modal-content" style="max-height: 70vh; overflow-y: auto;">
+                        <!-- Содержимое протокола будет здесь -->
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button type="button" class="btn-primary" onclick="printProtocolModal()">Печать</button>
+                        <button type="button" class="btn-danger" onclick="closeModal()">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Массив для хранения всех протоколов
+        let savedProtocols = JSON.parse(localStorage.getItem('savedProtocols')) || [];
+        
+        // Функция переключения вкладок
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].className = tabcontent[i].className.replace(" active", "");
+            }
+            
+            tablinks = document.getElementsByClassName("tab");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).className += " active";
+            evt.currentTarget.className += " active";
+            
+            if (tabName === 'history') {
+                displayProtocols();
+            }
+        }
+        
+        // Обработчик для фильтра по дате
+        document.getElementById('history-filter').addEventListener('change', function() {
+            document.getElementById('date-filter-container').style.display = 
+                this.value === 'date' ? 'block' : 'none';
+        });
+        
+        // Функция для отображения всех протоколов
+        function displayProtocols() {
+            const protocolsList = document.getElementById('protocols-list');
+            protocolsList.innerHTML = '';
+            
+            if (savedProtocols.length === 0) {
+                protocolsList.innerHTML = '<div class="card">Нет сохраненных протоколов</div>';
+                return;
+            }
+            
+            savedProtocols.forEach((protocol, index) => {
+                const protocolCard = document.createElement('div');
+                protocolCard.className = 'card';
+                
+                let typeText = '';
+                let detailsText = '';
+                let icon = '';
+                
+                if (protocol.type === 'police') {
+                    typeText = 'Полиция';
+                    detailsText = `${protocol.driverName || 'Нет данных'}`;
+                    icon = '🚓';
+                } else if (protocol.type === 'ems') {
+                    typeText = 'Скорая помощь';
+                    detailsText = `${protocol.patientName || 'Нет данных'}`;
+                    icon = '🚑';
+                } else if (protocol.type === 'fire') {
+                    typeText = 'Пожарные';
+                    detailsText = `${protocol.fireType || 'Нет данных'}`;
+                    icon = '🚒';
+                }
+                
+                protocolCard.innerHTML = `
+                    <div class="card-title">${icon} Протокол #${protocol.id}</div>
+                    <div>Тип: ${typeText}</div>
+                    <div>Дата: ${protocol.date} ${protocol.time || ''}</div>
+                    <div>Место: ${protocol.location || 'Нет данных'}</div>
+                    <div>Детали: ${detailsText}</div>
+                    <button type="button" class="btn-primary" style="margin-top: 10px;" onclick="viewProtocol(${index})">Просмотреть</button>
+                    <button type="button" class="btn-danger" style="margin-top: 10px; margin-left: 10px;" onclick="deleteProtocol(${index})">Удалить</button>
+                `;
+                
+                protocolsList.appendChild(protocolCard);
+            });
+        }
+        
+        // Функция фильтрации протоколов
+        function filterProtocols() {
+            const filter = document.getElementById('history-filter').value;
+            const date = document.getElementById('history-date').value;
+            const protocols = document.querySelectorAll('#protocols-list .card');
+            
+            savedProtocols.forEach((protocol, index) => {
+                const protocolCard = protocols[index];
+                let show = true;
+                
+                if (filter !== 'all') {
+                    if (filter === 'police' && protocol.type !== 'police') show = false;
+                    if (filter === 'ems' && protocol.type !== 'ems') show = false;
+                    if (filter === 'fire' && protocol.type !== 'fire') show = false;
+                    if (filter === 'date' && protocol.date !== date) show = false;
+                }
+                
+                if (protocolCard) {
+                    protocolCard.style.display = show ? 'block' : 'none';
+                }
+            });
+        }
+        
+        // Функция просмотра протокола
+        function viewProtocol(index) {
+            const protocol = savedProtocols[index];
+            const modal = document.getElementById('protocol-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            if (!protocol || !modal || !title || !content) return;
+            
+            title.textContent = `Просмотр протокола #${protocol.id}`;
+            
+            let protocolContent = '';
+            
+            if (protocol.type === 'police') {
+                protocolContent = `
+                    <h3>Протокол остановки ТС #${protocol.id}</h3>
+                    <p><strong>Дата:</strong> ${protocol.date || 'Нет данных'}</p>
+                    <p><strong>Время:</strong> ${protocol.time || 'Нет данных'}</p>
+                    <p><strong>Место:</strong> ${protocol.location || 'Нет данных'}</p>
+                    <p><strong>Сотрудник:</strong> ${protocol.officerName || 'Нет данных'} ${protocol.unit ? '(' + protocol.unit + ')' : ''}</p>
+                    <h4>Данные водителя:</h4>
+                    <p><strong>ФИО:</strong> ${protocol.driverName || 'Нет данных'}</p>
+                    <p><strong>Дата рождения:</strong> ${protocol.driverBirthdate || 'Нет данных'}</p>
+                    <p><strong>Водительское удостоверение:</strong> ${protocol.driverLicense || 'Нет данных'}</p>
+                    <p><strong>Статус прав:</strong> ${protocol.licenseStatus || 'Нет данных'}</p>
+                    <h4>Данные ТС:</h4>
+                    <p><strong>Марка/Модель:</strong> ${protocol.vehicleModel || 'Нет данных'}</p>
+                    <p><strong>Цвет:</strong> ${protocol.vehicleColor || 'Нет данных'}</p>
+                    <p><strong>Гос. номер:</strong> ${protocol.vehiclePlate || 'Нет данных'}</p>
+                    <p><strong>Регистрация:</strong> ${protocol.registration || 'Нет данных'}</p>
+                    <p><strong>Страховка:</strong> ${protocol.insurance || 'Нет данных'}</p>
+                    <h4>Нарушение:</h4>
+                    <p><strong>Причина остановки:</strong> ${protocol.reason || 'Нет данных'}</p>
+                    <p><strong>Нарушенные статьи:</strong> ${protocol.violationCode || 'Нет данных'}</p>
+                    <p><strong>Описание:</strong> ${protocol.violationDescription || 'Нет данных'}</p>
+                    <p><strong>Заметки офицера:</strong> ${protocol.officerNotes || 'Нет данных'}</p>
+                    <h4>Принятые меры:</h4>
+                    <p><strong>Штраф:</strong> ${protocol.fine || 'Нет'}</p>
+                    <p><strong>Предупреждение:</strong> ${protocol.warning || 'Нет'}</p>
+                    <p><strong>Арест:</strong> ${protocol.arrest || 'Нет'}</p>
+                    <p><strong>Эвакуация:</strong> ${protocol.tow || 'Нет'}</p>
+                    <p><strong>Дополнительные заметки:</strong> ${protocol.additionalNotes || 'Нет данных'}</p>
+                `;
+            } else if (protocol.type === 'ems') {
+                protocolContent = `
+                    <h3>Медицинский протокол #${protocol.id}</h3>
+                    <p><strong>Дата:</strong> ${protocol.date || 'Нет данных'}</p>
+                    <p><strong>Время:</strong> ${protocol.time || 'Нет данных'}</p>
+                    <p><strong>Место:</strong> ${protocol.location || 'Нет данных'}</p>
+                    <p><strong>Бригада:</strong> ${protocol.unit || 'Нет данных'}</p>
+                    <h4>Данные пострадавшего:</h4>
+                    <p><strong>ФИО:</strong> ${protocol.patientName || 'Нет данных'}</p>
+                    <p><strong>Дата рождения:</strong> ${protocol.patientBirthdate || 'Нет данных'}</p>
+                    <p><strong>Пол:</strong> ${protocol.patientGender || 'Нет данных'}</p>
+                    <p><strong>Состояние:</strong> ${protocol.patientCondition || 'Нет данных'}</p>
+                    <h4>Медицинские данные:</h4>
+                    <p><strong>Травмы/заболевания:</strong> ${protocol.patientInjuries || 'Нет данных'}</p>
+                    <p><strong>Оказанная помощь:</strong> ${protocol.treatmentProvided || 'Нет данных'}</p>
+                    <p><strong>Препараты:</strong> ${protocol.medicationAdministered || 'Нет'}</p>
+                    <p><strong>Направлен в:</strong> ${protocol.hospitalDestination || 'Не направлен'}</p>
+                    <h4>Дополнительная информация:</h4>
+                    <p><strong>Свидетели:</strong> ${protocol.witnesses || 'Нет'}</p>
+                    <p><strong>Участие полиции:</strong> ${protocol.policeInvolved || 'Нет данных'}</p>
+                    <p><strong>Заметки бригады:</strong> ${protocol.notes || 'Нет'}</p>
+                `;
+            } else if (protocol.type === 'fire') {
+                protocolContent = `
+                    <h3>Протокол пожарного инцидента #${protocol.id}</h3>
+                    <p><strong>Дата:</strong> ${protocol.date || 'Нет данных'}</p>
+                    <p><strong>Время:</strong> ${protocol.time || 'Нет данных'}</p>
+                    <p><strong>Место:</strong> ${protocol.location || 'Нет данных'}</p>
+                    <p><strong>Расчет:</strong> ${protocol.unit || 'Нет данных'}</p>
+                    <h4>Детали инцидента:</h4>
+                    <p><strong>Тип:</strong> ${protocol.fireType || 'Нет данных'}</p>
+                    <p><strong>Причина:</strong> ${protocol.fireCause || 'Неизвестна'}</p>
+                    <p><strong>Распространение:</strong> ${protocol.fireSpread || 'Нет данных'}</p>
+                    <p><strong>Ущерб:</strong> ${protocol.fireDamage || 'Нет данных'}</p>
+                    <p><strong>Пострадавшие:</strong> ${protocol.fireInjuries || 'Нет данных'}</p>
+                    <h4>Действия пожарных:</h4>
+                    <p><strong>Прибытие:</strong> ${protocol.responseTime || 'Нет данных'}</p>
+                    <p><strong>Локализация:</strong> ${protocol.containedTime || 'Нет данных'}</p>
+                    <p><strong>Ликвидация:</strong> ${protocol.extinguishedTime || 'Нет данных'}</p>
+                    <p><strong>Оборудование:</strong> ${protocol.equipment || 'Нет данных'}</p>
+                    <h4>Дополнительная информация:</h4>
+                    <p><strong>Свидетели:</strong> ${protocol.witnesses || 'Нет'}</p>
+                    <p><strong>Участие полиции:</strong> ${protocol.policeInvolved || 'Нет данных'}</p>
+                    <p><strong>Участие скорой помощи:</strong> ${protocol.emsInvolved || 'Нет данных'}</p>
+                    <p><strong>Заметки расчета:</strong> ${protocol.notes || 'Нет'}</p>
+                `;
+            }
+            
+            content.innerHTML = protocolContent;
+            modal.style.display = 'block';
+        }
+        
+        // Функция удаления протокола
+        function deleteProtocol(index) {
+            if (confirm('Вы уверены, что хотите удалить этот протокол?')) {
+                savedProtocols.splice(index, 1);
+                localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+                displayProtocols();
+            }
+        }
+        
+        // Функция очистки истории
+        function clearProtocols() {
+            if (confirm('Вы уверены, что хотите очистить всю историю протоколов?')) {
+                savedProtocols = [];
+                localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+                displayProtocols();
+            }
+        }
+        
+        // Функция закрытия модального окна
+        function closeModal() {
+            document.getElementById('protocol-modal').style.display = 'none';
+        }
+        
+        // Функция печати протокола из модального окна
+        function printProtocolModal() {
+            alert('Функция печати будет реализована в будущем');
+        }
+        
+        // Обработчики отправки форм
+        document.getElementById('police-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const protocol = {
+                id: 'P-' + Date.now(),
+                type: 'police',
+                date: formData.get('police-date'),
+                time: formData.get('police-time'),
+                location: formData.get('police-location') || formData.get('police-location'),
+                officerName: formData.get('officer-signature'),
+                unit: formData.get('police-unit'),
+                reason: Array.from(document.querySelectorAll('input[name="reason"]:checked')).map(el => el.nextElementSibling.textContent).join(', '),
+                driverName: formData.get('driver-name'),
+                driverBirthdate: formData.get('driver-birthdate'),
+                driverLicense: formData.get('driver-license'),
+                licenseStatus: document.querySelector('input[name="license-status"]:checked')?.nextElementSibling?.textContent || 'Нет данных',
+                vehicleModel: formData.get('vehicle-model'),
+                vehicleColor: formData.get('vehicle-color'),
+                vehiclePlate: formData.get('vehicle-plate'),
+                registration: document.querySelector('input[name="registration"]:checked')?.nextElementSibling?.textContent || 'Нет данных',
+                insurance: document.querySelector('input[name="insurance"]:checked')?.nextElementSibling?.textContent || 'Нет данных',
+                violationCode: formData.get('violation-code'),
+                violationDescription: formData.get('violation-description'),
+                officerNotes: formData.get('officer-notes'),
+                fine: formData.get('fine-amount') ? 'Да, ' + formData.get('fine-amount') + '$' : 'Нет',
+                warning: document.querySelector('input[name="warning"]:checked')?.value === 'none' ? 'Нет' : 
+                       document.querySelector('input[name="warning"]:checked')?.nextElementSibling?.textContent || 'Нет данных',
+                arrest: formData.get('arrest-charge') ? 'Да, ' + formData.get('arrest-charge') : 'Нет',
+                tow: formData.get('tow-service') ? 'Да, ' + formData.get('tow-service') : 'Нет',
+                additionalNotes: formData.get('additional-notes')
+            };
+            
+            savedProtocols.push(protocol);
+            localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+            alert('Протокол полиции сохранен в историю');
+            this.reset();
+        });
+        
+        document.getElementById('ems-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const protocol = {
+                id: 'M-' + Date.now(),
+                type: 'ems',
+                date: formData.get('ems-date'),
+                time: formData.get('ems-time'),
+                location: formData.get('ems-location'),
+                officerName: 'Бригада: ' + formData.get('ems-unit'),
+                unit: formData.get('ems-unit'),
+                patientName: formData.get('patient-name'),
+                patientBirthdate: formData.get('patient-birthdate'),
+                patientGender: formData.get('patient-gender'),
+                patientCondition: formData.get('patient-condition'),
+                patientInjuries: formData.get('patient-injuries'),
+                treatmentProvided: formData.get('treatment-provided'),
+                medicationAdministered: formData.get('medication-administered'),
+                hospitalDestination: formData.get('hospital-destination'),
+                witnesses: formData.get('ems-witnesses'),
+                policeInvolved: formData.get('ems-police-involved') === 'yes' ? 'Да' : 'Нет',
+                notes: formData.get('ems-notes')
+            };
+            
+            savedProtocols.push(protocol);
+            localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+            alert('Протокол скорой помощи сохранен в историю');
+            this.reset();
+        });
+        
+        document.getElementById('fire-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const protocol = {
+                id: 'F-' + Date.now(),
+                type: 'fire',
+                date: formData.get('fire-date'),
+                time: formData.get('fire-time'),
+                location: formData.get('fire-location'),
+                officerName: 'Расчет: ' + formData.get('fire-unit'),
+                unit: formData.get('fire-unit'),
+                fireType: formData.get('fire-type'),
+                fireCause: formData.get('fire-cause'),
+                fireSpread: formData.get('fire-spread'),
+                fireDamage: formData.get('fire-damage'),
+                fireInjuries: formData.get('fire-injuries'),
+                fireInjuriesDetails: formData.get('fire-injuries-details'),
+                responseTime: formData.get('fire-response-time'),
+                containedTime: formData.get('fire-contained-time'),
+                extinguishedTime: formData.get('fire-extinguished-time'),
+                equipment: formData.get('fire-equipment'),
+                personnel: formData.get('fire-personnel'),
+                witnesses: formData.get('fire-witnesses'),
+                policeInvolved: formData.get('fire-police-involved') === 'yes' ? 'Да' : 'Нет',
+                emsInvolved: formData.get('fire-ems-involved') === 'yes' ? 'Да' : 'Нет',
+                notes: formData.get('fire-notes')
+            };
+            
+            savedProtocols.push(protocol);
+            localStorage.setItem('savedProtocols', JSON.stringify(savedProtocols));
+            alert('Протокол пожарных сохранен в историю');
+            this.reset();
+        });
     
     <script>
         function openTab(evt, tabName) {
